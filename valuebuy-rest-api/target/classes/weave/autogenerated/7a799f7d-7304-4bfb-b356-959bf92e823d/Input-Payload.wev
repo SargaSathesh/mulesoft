@@ -1,0 +1,10 @@
+%dw 2.0
+
+type auto_7a799f7d_7304_4bfb_b356_959bf92e823d_Input_Payload = {
+  password: String, 
+  UserName: String, 
+  userType: String, 
+  userId: Number, 
+  _?: Any
+}
+

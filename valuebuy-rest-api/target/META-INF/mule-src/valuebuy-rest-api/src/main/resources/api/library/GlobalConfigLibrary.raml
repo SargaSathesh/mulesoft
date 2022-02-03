@@ -1,0 +1,15 @@
+#%RAML 1.0 Library
+usage: All global config comes here
+
+types:
+  Product: !include ../dataTypes/ProductDataType.raml
+  User: !include ../dataTypes/UserDataType.raml
+
+securitySchemes:
+  basic_auth: !include exchange_modules/79157857-01a9-4abd-9a58-ab71b951702d/basic-authentification/1.0.0/basic-authentification.raml
+    
+  cus_auth: !include exchange_modules/79157857-01a9-4abd-9a58-ab71b951702d/clientid-authentication/1.0.0/clientid-authentication.raml
+
+traits:
+  client_side_errors: !include ../traits/ClientSideTrait.raml
+  server_side_errors: !include ../traits/ServerSideTrait.raml

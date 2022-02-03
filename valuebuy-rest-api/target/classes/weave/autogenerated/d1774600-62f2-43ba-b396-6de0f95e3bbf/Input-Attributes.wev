@@ -1,0 +1,27 @@
+%dw 2.0
+
+type auto_d1774600_62f2_43ba_b396_6de0f95e3bbf_Input_Attributes = {|
+  clientCertificate?: {|
+    publicKey?: {|  |}, 
+    "type"?: String, 
+    encoded?: Binary
+  |}, 
+  headers: {|  |}, 
+  listenerPath: String, 
+  method: String, 
+  queryParams: {|
+    category?: "mobiles" | "laptop" | "shoes" | "clothes", 
+    price?: Number, 
+    brand?: String
+  |}, 
+  queryString: String, 
+  relativePath: String, 
+  remoteAddress: String, 
+  requestPath: String, 
+  requestUri: String, 
+  scheme: String, 
+  uriParams: {|  |}, 
+  version: String, 
+  localAddress: String
+|}
+

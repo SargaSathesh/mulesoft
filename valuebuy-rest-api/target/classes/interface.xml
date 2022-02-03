@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd ">
+    <apikit:config name="valuebuy-rest-api-config" api="valuebuy-rest-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <flow name="valuebuy-rest-api-main">
+        <http:listener config-ref="HTTP_Listener_config" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="valuebuy-rest-api-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="valuebuy-rest-api-console">
+        <http:listener config-ref="HTTP_Listener_config" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="valuebuy-rest-api-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="put:\admin\products\(pid):application\json:valuebuy-rest-api-config">
+        <flow-ref doc:name="putAdminByPidImpl" doc:id="96f351cf-ff7a-44e2-8975-766782a259d9" name="putAdminByPidImpl" />
+    </flow>
+    <flow name="put:\sellers\(pid):application\json:valuebuy-rest-api-config">
+        <flow-ref doc:name="putSellerByPidImpl" doc:id="ba1e15c7-d5e4-4711-93a3-66414bd169aa" name="putSellerByPidImpl" />
+    </flow>
+    <flow name="put:\admin\(userType)\(userId):application\json:valuebuy-rest-api-config">
+        <flow-ref doc:name="adminPutByuseridImpl" doc:id="51d4a20e-49f3-495d-a595-65e526dee923" name="adminPutByuseridImpl" />
+    </flow>
+    <flow name="delete:\sellers\(pid):valuebuy-rest-api-config">
+        <flow-ref doc:name="deleteSellerByPidImpl" doc:id="9725ade0-6228-4df4-bb2d-f91c489cd4c7" name="deleteSellerByPidImpl" />
+    </flow>
+    <flow name="delete:\admin\products\(pid):valuebuy-rest-api-config">
+        <flow-ref doc:name="AdmindeleteByPidImpl" doc:id="d563e583-cb2c-4a75-9c7d-a3a284a2264d" name="AdmindeleteByPidImpl" />
+    </flow>
+    <flow name="delete:\admin\(userType)\(userId):valuebuy-rest-api-config">
+        <flow-ref doc:name="AdmindeleteByuseridImpl" doc:id="f01ca1fa-6fbb-4825-961b-e1d61414414c" name="AdmindeleteByuseridImpl" />
+    </flow>
+    <flow name="get:\consumers\products:valuebuy-rest-api-config">
+        <flow-ref doc:name="consumerGetFlowImpl" doc:id="c9cee3e9-73bb-470b-b02f-bfe7da8ca920" name="consumerGetFlowImpl" />
+    </flow>
+    <flow name="get:\consumers\products\(pid):valuebuy-rest-api-config">
+        <flow-ref doc:name="consumerGetbyPidImpl" doc:id="5abb8faa-de69-4cef-9799-12cb6663f71e" name="consumerGetbyPidImpl" />
+    </flow>
+    <flow name="get:\admin\products\(pid):valuebuy-rest-api-config">
+        <flow-ref doc:name="AdminGetbyPidImpl" doc:id="a8edd730-122c-463f-abef-64a1f2eb66fd" name="AdminGetbyPidImpl" />
+    </flow>
+    <flow name="get:\sellers\(pid):valuebuy-rest-api-config">
+        <flow-ref doc:name="SellerGetbyPidImpl" doc:id="30f1f6ac-92cb-4ff8-be69-9d0a3df13c41" name="SellerGetbyPidImpl" />
+    </flow>
+    <flow name="get:\admin\(userType)\(userId):valuebuy-rest-api-config">
+        <flow-ref doc:name="AdmingetByuserIdImpl" doc:id="687623d6-f182-4f5d-a8ae-65a3c2a80db1" name="AdmingetByuserIdImpl" />
+    </flow>
+    <flow name="get:\admin\(userType):valuebuy-rest-api-config">
+        <flow-ref doc:name="getAdminUserTypeImpl" doc:id="dfc0cfc3-d6e7-473a-8368-2702e616838c" name="getAdminUserTypeImpl" />
+    </flow>
+    <flow name="post:\admin:application\json:valuebuy-rest-api-config">
+        <flow-ref doc:name="AdminpostUserImpl" doc:id="6b812ad1-bdeb-430b-adab-8d3740b4d13c" name="AdminpostUserImpl" />
+    </flow>
+    <flow name="post:\admin\products:application\json:valuebuy-rest-api-config">
+        <flow-ref doc:name="AdminpostProductImpl" doc:id="d092914c-b4fa-4d89-b369-41dfecc7335a" name="AdminpostProductImpl" />
+    </flow>
+    <flow name="post:\sellers:application\json:valuebuy-rest-api-config">
+        <flow-ref doc:name="postProductBySellerImpl" doc:id="bc32c317-28f4-4bae-8fbb-73c6b6584bd6" name="postProductBySellerImpl" />
+    </flow>
+</mule>

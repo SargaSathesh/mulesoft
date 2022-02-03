@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="d33d43b1-da95-412e-b1ff-758dca9a58ee" >
+		<db:my-sql-connection host="${secure::db.host}" port="${secure::db.port}" user="${secure::db.user}" password="${secure::db.password}" database="${secure::db.database}" />
+	</db:config>
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="04855cea-e84a-446c-a04a-d341b9324b5c" file="encrypted-app.properties" key="${enc.key}" />
+	<global-property doc:name="Global Property" doc:id="355aea8c-3bef-4307-bf12-ca3c7bd51c39" name="enc.key" value="mulesofttraining" />
+	<flow name="getEmployeesImpl" doc:id="4d022730-3579-421e-a8f8-a483144a87c4" >
+		<db:select doc:name="Select" doc:id="36a6022d-c1ea-4261-8d64-f71bde9030fb" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from employees where city = :city_value or pincode = :pincode or empName = :name]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	city_value: attributes.queryParams.city,
+	pincode: attributes.queryParams.pincode,
+	name: attributes.queryParams.name
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Object to JSON" doc:id="886d15f9-6b9f-4de9-b29c-f894aa485c29" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	empId: payload01.empId default 0,
+	name: payload01.empName default "",
+	age: payload01.age default 0,
+	dept: payload01.dept default "",
+	deptId: payload01.deptId default 0,
+	experience: payload01.experience default "",
+	salary: payload01.salary default 0,
+	address: payload01.address default "",
+	city: payload01.city default "",
+	pincode: payload01.pincode default 0
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="dccb4f3d-0966-4d88-8893-26b1a12ab609" message="End of the getEmployeesFlow"/>
+	</flow>
+	<flow name="getEmployeesByIdFlowImpl" doc:id="d3042d16-f53d-43c3-89c2-256ae8e281f2" >
+		<db:select doc:name="Select" doc:id="201b1316-165b-4136-b397-46a6d4d37247" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from employees where empId = :empId_value]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{empId_value: attributes.uriParams.empId}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Obejct to JSON" doc:id="27a0c344-65d0-4c6f-aca6-69d447591345" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var data = payload map ( payload01 , indexOfPayload01 ) -> {
+	empId: payload01.empId default 0,
+	name: payload01.empName default "",
+	age: payload01.age default 0,
+	dept: payload01.dept default "",
+	deptId: payload01.deptId default 0,
+	experience: payload01.experience default "",
+	salary: payload01.salary default 0,
+	address: payload01.address default "",
+	city: payload01.city default "",
+	pincode: payload01.pincode default 0
+	}
+---
+data[0]
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="301ec343-7d4e-469c-999e-6fa078fd80d3" message="End of getEmployeesByIdFlow"/>
+	</flow>
+	<flow name="postEmployeesFlowImpl" doc:id="468628c5-b1c1-48f2-b4e3-e12a69675fa6" >
+		<db:insert doc:name="Insert" doc:id="2892f3c2-a8f3-4b28-af8f-ba92a479d4fd" config-ref="Database_Config">
+			<db:sql ><![CDATA[insert into employees(empId,empName,age,dept,deptId,experience,salary,address,city,pincode)values(:empId,:name,:age,:dept,:deptId,:experience,:salary,:address,:city,:pincode)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	empId: payload.empId,
+	name: payload.name,
+	age: payload.age,
+	dept: payload.dept,
+	deptId: payload.deptId,
+	experience: payload.experience,
+	salary: payload.salary,
+	address: payload.address,
+	city: payload.city,
+	pincode: payload.pincode
+}]]]></db:input-parameters>
+		</db:insert>
+		<ee:transform doc:name="Transform Message" doc:id="81469cea-0309-4ec3-9f77-60f1f07e0e3b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	  message: if(payload.affectedRows == 1)
+                "Employee is created"
+            else
+                "Empolyee is not created"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="updateEmployeesFlowImpl" doc:id="0f7a72d9-6724-4eac-b323-b13bac80a99a" >
+		<db:update doc:name="Update" doc:id="3547d005-e74a-4fcb-9d41-5216e2a23c86" config-ref="Database_Config">
+			<db:sql ><![CDATA[UPDATE employees SET empName = :name, age = :age, dept = :dept, deptId = :deptId, experience = :experience, salary = :salary, address = :address, city = :city, pincode = :pincode WHERE  empId = :empId;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	empId: attributes.uriParams.empId,
+	name: payload.name,
+	age: payload.age,
+	dept: payload.dept,
+	deptId: payload.deptId,
+	experience: payload.experience,
+	salary: payload.salary,
+	address: payload.address,
+	city: payload.city,
+	pincode: payload.pincode
+}]]]></db:input-parameters>
+		</db:update>
+		<ee:transform doc:name="Transform Message" doc:id="ac2fa319-22df-4ded-bf07-ec9f95201fa1" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	 message: if(payload.affectedRows == 1)
+                "Employee is updated"
+            else
+                "Employee is not updated"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="deleteEmployeesFlowImpl" doc:id="38c1a6d4-ff9f-406d-bd11-cda019c6585e" >
+		<db:delete doc:name="Delete" doc:id="37b47790-a010-4927-a6cd-d537c460416a" config-ref="Database_Config">
+			<db:sql ><![CDATA[DELETE from employees where empId = :empId]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	empId: attributes.uriParams.empId
+}]]]></db:input-parameters>
+		</db:delete>
+		<ee:transform doc:name="Transform Message" doc:id="6f299677-2f99-4dff-b033-c290f09bfefb" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	 message: if(payload == 1)
+                "Employee has been deleted"
+            else
+                "Employee has been not deleted"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	</mule>

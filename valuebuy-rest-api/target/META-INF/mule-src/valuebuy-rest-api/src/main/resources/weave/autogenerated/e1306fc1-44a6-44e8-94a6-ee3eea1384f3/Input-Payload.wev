@@ -1,0 +1,13 @@
+%dw 2.0
+
+type auto_e1306fc1_44a6_44e8_94a6_ee3eea1384f3_Input_Payload = {
+  pname: String, 
+  price: Number, 
+  review: Number, 
+  pid: Number, 
+  category: String, 
+  stock: Number, 
+  brand: String, 
+  _?: Any
+}
+
